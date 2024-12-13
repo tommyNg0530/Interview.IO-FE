@@ -22,6 +22,7 @@ import { existEnvironmentVariable, getEnvironmentVariable } from '../helpers/uti
 import { isMobile } from 'react-device-detect';
 import SpeechGPTIcon from './Icons/SpeechGPTIcon';
 import LanguageSelector from './LocaleSelector';
+import { set } from 'immer/dist/internal';
 
 type baseStatus = 'idle' | 'waiting' | 'speaking' | 'recording' | 'connecting';
 
@@ -75,6 +76,8 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
   const prevStatusRef = useRef(status);
 
   const [finished, setFinished] = useState<boolean>(true); // audio finished playing
+
+  const [dialogueId, setDialogueId] = useState<number>(1); //TODO dialogue id to keep track of the conversation
 
   // speech to text transcript
   const [transcript, setTranscript] = useState('');
@@ -207,6 +210,8 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
     }
   }, [response]);
 
+
+  // TODO : If Trigger the HandleSubmit, will call llm here
   useEffect(() => {
     if (conversations.length > 0 && sendMessages) {
       setStatus('waiting');
@@ -222,59 +227,184 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
       conversationsToSent = conversationsToSent.slice(chat.maxMessages * -1);
       conversationsToSent.unshift({ role: 'system', content: chat.systemRole });
       console.log(conversationsToSent);
-      const openaiApiKey = existEnvironmentVariable('OPENAI_API_KEY')
-        ? getEnvironmentVariable('OPENAI_API_KEY')
-        : key.openaiApiKey;
-      const openaiApiHost = existEnvironmentVariable('OPENAI_HOST')
-        ? getEnvironmentVariable('OPENAI_HOST')
-        : key.openaiHost;
-      const openaiApiModel = existEnvironmentVariable('OPENAI_MODEL')
-        ? getEnvironmentVariable('OPENAI_MODEL')
-        : key.openaiModel;
 
-      if (existEnvironmentVariable('ACCESS_CODE')) {
-        const accessCode = getEnvironmentVariable('ACCESS_CODE');
-        if (accessCode !== key.accessCode) {
-          notify.invalidAccessCodeNotify();
-          setStatus('idle');
-          return;
-        }
+      if (conversationsToSent[conversationsToSent.length - 1].content === "start") {
+        startLLMConversation();
+      } else {
+        sendUserInputToLLM(conversationsToSent[conversationsToSent.length - 1].content); //TODO <====== trigger the api call here
       }
+      setSendMessages(false);
+      setStatus('idle');
 
-      sendRequest(
-        conversationsToSent as any,
-        openaiApiKey,
-        openaiApiHost,
-        openaiApiModel,
-        (data: any) => {
-          setStatus('idle');
-          if (data) {
-            if ('error' in data) {
-              console.log(data.error.code);
-              if (data.error.code === 'invalid_api_key') {
-                notify.invalidOpenAiKeyNotify();
-              } else if (data.error.code === 'model_not_found') {
-                notify.invalidOpenAiModelNotify();
-              } else if (data.error.type === 'invalid_request_error') {
-                notify.invalidOpenAiRequestNotify();
-              } else {
-                notify.openAiErrorNotify();
-              }
-            }
-            setResponse(data.choices[0].message.content);
-            console.log('Response: ' + data.choices[0].message.content);
-            setStatus('idle');
-          }
-        }
-      ).catch(err => {
-        console.log(err);
-        notify.networkErrorNotify();
-        setStatus('idle');
-      });
+      // const openaiApiKey = existEnvironmentVariable('OPENAI_API_KEY')
+      //   ? getEnvironmentVariable('OPENAI_API_KEY')
+      //   : key.openaiApiKey;
+      // const openaiApiHost = existEnvironmentVariable('OPENAI_HOST')
+      //   ? getEnvironmentVariable('OPENAI_HOST')
+      //   : key.openaiHost;
+      // const openaiApiModel = existEnvironmentVariable('OPENAI_MODEL')
+      //   ? getEnvironmentVariable('OPENAI_MODEL')
+      //   : key.openaiModel;
+
+      // if (existEnvironmentVariable('ACCESS_CODE')) {
+      //   const accessCode = getEnvironmentVariable('ACCESS_CODE');
+      //   if (accessCode !== key.accessCode) {
+      //     notify.invalidAccessCodeNotify();
+      //     setStatus('idle');
+      //     return;
+      //   }
+      // }
+
+      // sendRequest(
+      //   conversationsToSent as any,
+      //   // openaiApiKey,
+      //   // openaiApiHost,
+      //   // openaiApiModel,
+      //   (data: any) => {
+      //     setStatus('idle');
+      //     if (data) {
+      //       // if ('error' in data) {
+      //       //   console.log(data.error.code);
+      //       //   if (data.error.code === 'invalid_api_key') {
+      //       //     notify.invalidOpenAiKeyNotify();
+      //       //   } else if (data.error.code === 'model_not_found') {
+      //       //     notify.invalidOpenAiModelNotify();
+      //       //   } else if (data.error.type === 'invalid_request_error') {
+      //       //     notify.invalidOpenAiRequestNotify();
+      //       //   } else {
+      //       //     notify.openAiErrorNotify();
+      //       //   }
+      //       // }
+      //       setResponse(data.choices[0].message.content);
+      //       console.log('Response: ' + data.choices[0].message.content);
+      //       setStatus('idle');
+      //     }
+      //   }
+      // ).catch(err => {
+      //   console.log(err);
+      //   notify.networkErrorNotify();
+      //   setStatus('idle');
+      // });
     }
   }, [conversations]);
 
+
+
+  // // TODO : How to render the output from the backend to fe, 改 setResponse ()
+  // useEffect(() => {
+  //   if (conversations.length > 0 && sendMessages) {
+  //     setStatus('waiting');
+  //     let conversationsToSent: any = conversations;
+  //     if (!chat.useAssistant) {
+  //       conversationsToSent = conversations.filter(
+  //         conversation => conversation.role === 'user' || conversation.role === 'system'
+  //       );
+  //     }
+  //     conversationsToSent = conversationsToSent.map((conversation: any) => {
+  //       return { role: conversation.role, content: conversation.content };
+  //     });
+  //     conversationsToSent = conversationsToSent.slice(chat.maxMessages * -1);
+  //     conversationsToSent.unshift({ role: 'system', content: chat.systemRole });
+
+  //     console.log(conversationsToSent);
+
+
+  //     setStatus('idle');
+
+  //     //console.log('Response: ' + data.choices[0].message.content);
+  //     setStatus('idle');
+  //   }
+
+  // }, [conversations]);
+
+  //TODO : API call to start the conversation
+  const startLLMConversation = async () => {
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      // TODO: User should be able to input the company name and position name to init the conversation
+      body: JSON.stringify({
+        conversationId: currentSessionId,
+        companyName: "Nomura",
+        positionName: "Software Engineer",
+        responsibilities: "Developing software applications and solutions for building out swap booking workflow microservices",
+
+      }),
+    };
+
+    try {
+      console.log('Starting conversation');
+      await fetch('http://localhost:8000' + `/api/v1/starting-chat`, requestOptions)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Response:', data);
+          setDialogueId(data.dialogueId + 1);
+
+          chatDB.chat.add({ role: 'system', content: data.content, sessionId: data.conversationId });
+        })
+        .catch(err => {
+          console.log(err)
+        });
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }
+
+  // API call: To send user's input to the backend
+  const sendUserInputToLLM = async (userInput: string) => {
+
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        conversationId: currentSessionId,
+        dialogueId: dialogueId,
+        content: userInput,
+        role: "user",
+        type: "response",
+      }),
+    };
+
+    try {
+      console.log('Sending input:', userInput);
+      await fetch('http://127.0.0.1:8000' + `/api/v1/text-response`, requestOptions)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Response:', data);
+
+          // setResponse(''); //Seems will have another output if enable
+          if (data !== null) {
+            const feedbackContent = data.Feedback._content;
+            const nextQuestionContent = data.NextQuestion._content;
+            const nextDialogueId = data.NextQuestion._dialogueId;
+            chatDB.chat.add({ role: 'system', content: feedbackContent, sessionId: currentSessionId });
+            chatDB.chat.add({ role: 'system', content: nextQuestionContent, sessionId: currentSessionId });
+
+            setDialogueId(nextDialogueId + 1); // Update the dialogueId based on the last response from the backend
+
+          } else {
+            console.log('No response from the backend');
+          }
+        })
+        .catch(err => {
+          console.log(err)
+        });
+
+    } catch (error) {
+      console.error('Error:', error);
+    }
+
+  }
+
+
   const handleSend = async () => {
+
+    console.log('Triggered handleSend');
     if (input.length === 0 || status === 'waiting' || status === 'speaking') {
       return;
     }
@@ -492,7 +622,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           <div className="flex flex-row py-2 justify-between items-center w-full">
             <div className="text-2xl font-bold text-left text-gray-800">
               <span className="font-bold ml-2 decoration-purple-500 animate-text text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-                SpeechGPT
+                Interview.IO
               </span>
             </div>
             <div>
