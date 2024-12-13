@@ -24,7 +24,7 @@ COPY . .
 RUN yarn build
 
 # Use a smaller ARM64-compatible base image for the final stage
-FROM arm64v8/nginx:alpine
+FROM nginx:alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
 WORKDIR /usr/share/nginx/html
