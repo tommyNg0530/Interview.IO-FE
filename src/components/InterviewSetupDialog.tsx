@@ -1,30 +1,15 @@
-import React from 'react';
-
-export type InterviewParam = {
-  company: string;
-  position: string;
-  responsibilities: string;
-};
+import React, { useState } from 'react';
+import { InterviewParam } from './Content';
 
 export type InterviewSetupDialogProps = {
-  interviewParam: InterviewParam;
-  setInterviewParam: React.Dispatch<React.SetStateAction<InterviewParam>>;
+  startLLMConversation: (interviewParam: InterviewParam) => void;
 };
 
 export const InterviewSetupDialog = React.forwardRef(
-  (
-    { interviewParam, setInterviewParam }: InterviewSetupDialogProps,
-    ref: React.Ref<HTMLDialogElement>
-  ) => {
-    const setCompany = (company: string) => {
-      setInterviewParam(prev => ({ ...prev, company }));
-    };
-    const setPosition = (position: string) => {
-      setInterviewParam(prev => ({ ...prev, position }));
-    };
-    const setResponsibilities = (responsibilities: string) => {
-      setInterviewParam(prev => ({ ...prev, responsibilities }));
-    };
+  ({ startLLMConversation }: InterviewSetupDialogProps, ref: React.Ref<HTMLDialogElement>) => {
+    const [company, setCompany] = useState('');
+    const [position, setPosition] = useState('');
+    const [responsibilities, setResponsibilities] = useState('');
 
     return (
       <dialog
@@ -44,7 +29,7 @@ export const InterviewSetupDialog = React.forwardRef(
               <input
                 className="w-full"
                 type="text"
-                value={interviewParam.company}
+                value={company}
                 onChange={e => {
                   setCompany(e.target.value);
                 }}
@@ -55,7 +40,7 @@ export const InterviewSetupDialog = React.forwardRef(
               <input
                 className="w-full h-8"
                 type="text"
-                value={interviewParam.position}
+                value={position}
                 onChange={e => {
                   setPosition(e.target.value);
                 }}
@@ -65,21 +50,32 @@ export const InterviewSetupDialog = React.forwardRef(
               <p className="font-bold">Responsibiliites</p>
               <textarea
                 className="w-full"
-                value={interviewParam.responsibilities}
+                value={responsibilities}
                 onChange={e => {
                   setResponsibilities(e.target.value);
                 }}
               ></textarea>
             </label>
           </form>
-          <button
-            className="flex flex-row items-center w-[max-content] space-x-2 rounded-lg px-4 py-2 font-medium text-white bg-gradient-to-tr from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-700 active:from-indigo-700 active:to-purple-800 transition-colors duration-300"
-            onClick={() => {
-              if (ref) ref?.current?.close();
-            }}
-          >
-            close
-          </button>
+          <div className="flex gap-4">
+            <button
+              className="flex flex-row items-center w-[max-content] space-x-2 rounded-lg px-4 py-2 font-medium text-white bg-gradient-to-tr from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-700 active:from-indigo-700 active:to-purple-800 transition-colors duration-300"
+              onClick={() => {
+                startLLMConversation({ company, position, responsibilities });
+                ref?.current?.close();
+              }}
+            >
+              Start
+            </button>
+            <button
+              className="flex flex-row items-center space-x-2 rounded-lg px-4 py-2 font-medium text-white bg-gradient-to-l from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 active:from-orange-800 active:to-red-800 transition-colors duration-300"
+              onClick={() => {
+                if (ref) ref?.current?.close();
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       </dialog>
     );

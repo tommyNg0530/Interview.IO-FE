@@ -23,7 +23,13 @@ import { isMobile } from 'react-device-detect';
 import SpeechGPTIcon from './Icons/SpeechGPTIcon';
 import LanguageSelector from './LocaleSelector';
 import { set } from 'immer/dist/internal';
-import InterviewSetupDialog, { InterviewParam } from './InterviewSetupDialog';
+import InterviewSetupDialog from './InterviewSetupDialog';
+
+export type InterviewParam = {
+  company: string;
+  position: string;
+  responsibilities: string;
+};
 
 type baseStatus = 'idle' | 'waiting' | 'speaking' | 'recording' | 'connecting';
 
@@ -243,11 +249,8 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
       conversationsToSent.unshift({ role: 'system', content: chat.systemRole });
       console.log(conversationsToSent);
 
-      if (conversationsToSent[conversationsToSent.length - 1].content === "start") {
-        startLLMConversation();
-      } else {
-        sendUserInputToLLM(conversationsToSent[conversationsToSent.length - 1].content); //TODO <====== trigger the api call here
-      }
+      sendUserInputToLLM(conversationsToSent[conversationsToSent.length - 1].content); //TODO <====== trigger the api call here
+
       setSendMessages(false);
       setStatus('idle');
 
@@ -305,7 +308,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
 
 
   //TODO : API call to start the conversation
-  const startLLMConversation = async () => {
+  const startLLMConversation = async (interviewParam: InterviewParam) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -621,7 +624,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
                   interviewSetupRef?.current?.showModal();
                 }}
               >
-                ⚙️
+                ⚙️ Start Interview
               </button>
             </div>
           </div>
@@ -660,11 +663,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           notify={notify}
         />
       </div>
-      <InterviewSetupDialog
-        interviewParam={interviewParam}
-        setInterviewParam={setInterviewParam}
-        ref={interviewSetupRef}
-      />
+      <InterviewSetupDialog startLLMConversation={startLLMConversation} ref={interviewSetupRef} />
     </div>
   );
 };
