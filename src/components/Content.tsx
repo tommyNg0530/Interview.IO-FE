@@ -23,6 +23,7 @@ import { isMobile } from 'react-device-detect';
 import SpeechGPTIcon from './Icons/SpeechGPTIcon';
 import LanguageSelector from './LocaleSelector';
 import { set } from 'immer/dist/internal';
+import InterviewSetupDialog, { InterviewParam } from './InterviewSetupDialog';
 
 type baseStatus = 'idle' | 'waiting' | 'speaking' | 'recording' | 'connecting';
 
@@ -83,6 +84,20 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
   const [transcript, setTranscript] = useState('');
   // speech to text listening status
   const [isListening, setIsListening] = useState(false);
+
+  const [interviewParam, setInterviewParam] = useState<InterviewParam>({
+    company: '',
+    position: '',
+    responsibilities: '',
+  });
+
+  const interviewSetupRef = useRef<HTMLDialogElement | null>(null);
+
+  useEffect(() => {
+    if (interviewSetupRef.current) {
+      interviewSetupRef.current.showModal();
+    }
+  }, [interviewSetupRef]);
 
   const isMount = useIsMount();
 
@@ -300,10 +315,9 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
       // TODO: User should be able to input the company name and position name to init the conversation
       body: JSON.stringify({
         conversationId: currentSessionId,
-        companyName: "Nomura",
-        positionName: "Software Engineer",
-        responsibilities: "Developing software applications and solutions for building out swap booking workflow microservices",
-
+        companyName: interviewParam.company,
+        positionName: interviewParam.position,
+        responsibilities: interviewParam.responsibilities,
       }),
     };
 
@@ -597,9 +611,18 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
                 Interview.IO
               </span>
             </div>
-            <div>
-              <LanguageSelector />
-              {/*<AppearanceSelector/>*/}
+            <div className="flex align-middle">
+              <div>
+                <LanguageSelector />
+                {/*<AppearanceSelector/>*/}
+              </div>
+              <button
+                onClick={() => {
+                  interviewSetupRef?.current?.showModal();
+                }}
+              >
+                ⚙️
+              </button>
             </div>
           </div>
         </div>
@@ -637,6 +660,11 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           notify={notify}
         />
       </div>
+      <InterviewSetupDialog
+        interviewParam={interviewParam}
+        setInterviewParam={setInterviewParam}
+        ref={interviewSetupRef}
+      />
     </div>
   );
 };
