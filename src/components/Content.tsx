@@ -257,24 +257,24 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
 
       // sendRequest(
       //   conversationsToSent as any,
-      //   // openaiApiKey,
-      //   // openaiApiHost,
-      //   // openaiApiModel,
+      // openaiApiKey,
+      // openaiApiHost,
+      // openaiApiModel,
       //   (data: any) => {
       //     setStatus('idle');
       //     if (data) {
-      //       // if ('error' in data) {
-      //       //   console.log(data.error.code);
-      //       //   if (data.error.code === 'invalid_api_key') {
-      //       //     notify.invalidOpenAiKeyNotify();
-      //       //   } else if (data.error.code === 'model_not_found') {
-      //       //     notify.invalidOpenAiModelNotify();
-      //       //   } else if (data.error.type === 'invalid_request_error') {
-      //       //     notify.invalidOpenAiRequestNotify();
-      //       //   } else {
-      //       //     notify.openAiErrorNotify();
-      //       //   }
-      //       // }
+      // if ('error' in data) {
+      //   console.log(data.error.code);
+      //   if (data.error.code === 'invalid_api_key') {
+      //     notify.invalidOpenAiKeyNotify();
+      //   } else if (data.error.code === 'model_not_found') {
+      //     notify.invalidOpenAiModelNotify();
+      //   } else if (data.error.type === 'invalid_request_error') {
+      //     notify.invalidOpenAiRequestNotify();
+      //   } else {
+      //     notify.openAiErrorNotify();
+      //   }
+      // }
       //       setResponse(data.choices[0].message.content);
       //       console.log('Response: ' + data.choices[0].message.content);
       //       setStatus('idle');
@@ -288,34 +288,6 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
     }
   }, [conversations]);
 
-
-
-  // // TODO : How to render the output from the backend to fe, 改 setResponse ()
-  // useEffect(() => {
-  //   if (conversations.length > 0 && sendMessages) {
-  //     setStatus('waiting');
-  //     let conversationsToSent: any = conversations;
-  //     if (!chat.useAssistant) {
-  //       conversationsToSent = conversations.filter(
-  //         conversation => conversation.role === 'user' || conversation.role === 'system'
-  //       );
-  //     }
-  //     conversationsToSent = conversationsToSent.map((conversation: any) => {
-  //       return { role: conversation.role, content: conversation.content };
-  //     });
-  //     conversationsToSent = conversationsToSent.slice(chat.maxMessages * -1);
-  //     conversationsToSent.unshift({ role: 'system', content: chat.systemRole });
-
-  //     console.log(conversationsToSent);
-
-
-  //     setStatus('idle');
-
-  //     //console.log('Response: ' + data.choices[0].message.content);
-  //     setStatus('idle');
-  //   }
-
-  // }, [conversations]);
 
   //TODO : API call to start the conversation
   const startLLMConversation = async () => {
@@ -337,7 +309,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
 
     try {
       console.log('Starting conversation');
-      await fetch('http://localhost:8000' + `/api/v1/starting-chat`, requestOptions)
+      await fetch('https://backend-service-938487504579.asia-east2.run.app' + `/api/v1/starting-chat`, requestOptions)
         .then(response => response.json())
         .then(data => {
           console.log('Response:', data);
@@ -372,7 +344,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
 
     try {
       console.log('Sending input:', userInput);
-      await fetch('http://127.0.0.1:8000' + `/api/v1/text-response`, requestOptions)
+      await fetch('https://backend-service-938487504579.asia-east2.run.app' + `/api/v1/text-response`, requestOptions)
         .then(response => response.json())
         .then(data => {
           console.log('Response:', data);
