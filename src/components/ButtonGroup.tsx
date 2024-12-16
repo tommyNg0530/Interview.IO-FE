@@ -45,7 +45,7 @@ function ButtonGroup({
   const { i18n } = useTranslation();
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
-  const resetTimeoutRef = useRef<number | null>(null);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   function handleResetClick() {
     if (!isConfirmingReset) {
