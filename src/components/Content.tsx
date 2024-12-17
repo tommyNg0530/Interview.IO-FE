@@ -23,7 +23,7 @@ import { isMobile } from 'react-device-detect';
 import SpeechGPTIcon from './Icons/SpeechGPTIcon';
 import LanguageSelector from './LocaleSelector';
 import { set } from 'immer/dist/internal';
-import InterviewSetupDialog from './InterviewSetupDialog';
+import InterviewSetupModal from './InterviewSetupModal';
 
 export type InterviewParam = {
   company: string;
@@ -96,14 +96,6 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
     position: '',
     responsibilities: '',
   });
-
-  const interviewSetupRef = useRef<HTMLDialogElement | null>(null);
-
-  useEffect(() => {
-    if (interviewSetupRef.current) {
-      interviewSetupRef.current.showModal();
-    }
-  }, [interviewSetupRef]);
 
   const isMount = useIsMount();
 
@@ -333,6 +325,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           setDialogueId(data.dialogueId + 1);
 
           chatDB.chat.add({ role: 'system', content: data.content, sessionId: data.conversationId });
+          setInterviewParam(interviewParam);
         })
         .catch(err => {
           console.log(err)
@@ -572,7 +565,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
   }, [isListening]);
 
   return (
-    <div className="max-w-180 w-full flex flex-col h-full justify-between pb-3 dark:bg-gray-900">
+    <div className="relative max-w-180 w-full flex flex-col h-full justify-between pb-3 dark:bg-gray-900">
       {voice.service == 'System' && (
         <BrowserSpeechToText
           isListening={isListening}
@@ -619,13 +612,6 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
                 <LanguageSelector />
                 {/*<AppearanceSelector/>*/}
               </div>
-              <button
-                onClick={() => {
-                  interviewSetupRef?.current?.showModal();
-                }}
-              >
-                ⚙️ Start Interview
-              </button>
             </div>
           </div>
         </div>
@@ -663,7 +649,9 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           notify={notify}
         />
       </div>
-      <InterviewSetupDialog startLLMConversation={startLLMConversation} ref={interviewSetupRef} />
+      {interviewParam.company == '' && (
+        <InterviewSetupModal startLLMConversation={startLLMConversation} />
+      )}
     </div>
   );
 };
