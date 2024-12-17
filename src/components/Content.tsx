@@ -23,6 +23,13 @@ import { isMobile } from 'react-device-detect';
 import SpeechGPTIcon from './Icons/SpeechGPTIcon';
 import LanguageSelector from './LocaleSelector';
 import { set } from 'immer/dist/internal';
+import InterviewSetupModal from './InterviewSetupModal';
+
+export type InterviewParam = {
+  company: string;
+  position: string;
+  responsibilities: string;
+};
 
 type baseStatus = 'idle' | 'waiting' | 'speaking' | 'recording' | 'connecting';
 
@@ -83,6 +90,12 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
   const [transcript, setTranscript] = useState('');
   // speech to text listening status
   const [isListening, setIsListening] = useState(false);
+
+  const [interviewParam, setInterviewParam] = useState<InterviewParam>({
+    company: '',
+    position: '',
+    responsibilities: '',
+  });
 
   const isMount = useIsMount();
 
@@ -228,11 +241,8 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
       conversationsToSent.unshift({ role: 'system', content: chat.systemRole });
       console.log(conversationsToSent);
 
-      if (conversationsToSent[conversationsToSent.length - 1].content === "start") {
-        startLLMConversation();
-      } else {
-        sendUserInputToLLM(conversationsToSent[conversationsToSent.length - 1].content); //TODO <====== trigger the api call here
-      }
+      sendUserInputToLLM(conversationsToSent[conversationsToSent.length - 1].content); //TODO <====== trigger the api call here
+
       setSendMessages(false);
       setStatus('idle');
 
@@ -290,7 +300,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
 
 
   //TODO : API call to start the conversation
-  const startLLMConversation = async () => {
+  const startLLMConversation = async (interviewParam: InterviewParam) => {
     const requestOptions = {
       method: 'POST',
       headers: {
@@ -300,10 +310,9 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
       // TODO: User should be able to input the company name and position name to init the conversation
       body: JSON.stringify({
         conversationId: currentSessionId,
-        companyName: "Nomura",
-        positionName: "Software Engineer",
-        responsibilities: "Developing software applications and solutions for building out swap booking workflow microservices",
-
+        companyName: interviewParam.company,
+        positionName: interviewParam.position,
+        responsibilities: interviewParam.responsibilities,
       }),
     };
 
@@ -316,6 +325,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           setDialogueId(data.dialogueId + 1);
 
           chatDB.chat.add({ role: 'system', content: data.content, sessionId: data.conversationId });
+          setInterviewParam(interviewParam);
         })
         .catch(err => {
           console.log(err)
@@ -555,7 +565,7 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
   }, [isListening]);
 
   return (
-    <div className="max-w-180 w-full flex flex-col h-full justify-between pb-3 dark:bg-gray-900">
+    <div className="relative max-w-180 w-full flex flex-col h-full justify-between pb-3 dark:bg-gray-900">
       {voice.service == 'System' && (
         <BrowserSpeechToText
           isListening={isListening}
@@ -597,9 +607,11 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
                 Interview.IO
               </span>
             </div>
-            <div>
-              <LanguageSelector />
-              {/*<AppearanceSelector/>*/}
+            <div className="flex align-middle">
+              <div>
+                <LanguageSelector />
+                {/*<AppearanceSelector/>*/}
+              </div>
             </div>
           </div>
         </div>
@@ -637,6 +649,9 @@ const Content: React.FC<ContentProps> = ({ notify }) => {
           notify={notify}
         />
       </div>
+      {interviewParam.company == '' && (
+        <InterviewSetupModal startLLMConversation={startLLMConversation} />
+      )}
     </div>
   );
 };
